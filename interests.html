@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <title>Your Interests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .interest-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            margin: 20px;
+        }
+        h1 {
+            font-size: 24px;
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .interest-section {
+            margin-top: 20px;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .interest-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .interest-item h3 {
+            margin: 0 0 10px;
+        }
+        .interest-item p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="interest-container">
+        <h1>Your Interests</h1>
+        <div id="interestsList"></div>
+    </div>
+
+    <script type="module">
+        // Firebase configuration
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDOQVvJ3jIN1a7hNxSko4WPPw8EYB1b0M",
+            authDomain: "sports-selection-18948.firebaseapp.com",
+            projectId: "sports-selection-18948",
+            storageBucket: "sports-selection-18948.firebasestorage.app",
+            messagingSenderId: "339862998532",
+            appId: "1:339862998532:web:e50f88e8709d22d9a0af51",
+            measurementId: "G-HD6G578XCY"
+        };
+    
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Check authentication state
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                // Redirect to login page if user is not authenticated
+                window.location.href = 'login.html';
+            } else {
+                fetchInterests(user.uid); // Fetch interests if authenticated
+            }
+        });
+
+        // Fetch and display user interests
+        async function fetchInterests(userId) {
+            try {
+                const interestsRef = collection(db, "interest_selections");
+                const q = query(interestsRef, where("userId", "==", userId));
+                const querySnapshot = await getDocs(q);
+
+                const interestsList = document.getElementById('interestsList');
+                if (querySnapshot.empty) {
+                    interestsList.innerHTML = '<p>No interests found. Please submit your interests first.</p>';
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const interestItem = document.createElement('div');
+                    interestItem.classList.add('interest-item');
+
+                    interestItem.innerHTML = `
+                        <h3>School/Department: ${data.school || 'Not specified'}</h3>
+                        <p><strong>Achievements:</strong> ${data.achievements || 'Not specified'}</p>
+                        <p><strong>Custom Interest:</strong> ${data.customInterest || 'Not specified'}</p>
+                        <p><strong>Custom Interest Description:</strong> ${data.customInterestDesc || 'Not specified'}</p>
+                    `;
+
+                    interestsList.appendChild(interestItem);
+                });
+            } catch (error) {
+                console.error('Error fetching interests:', error);
+                alert('An error occurred while retrieving your interests. Please try again.');
+            }
+        }
+    </script>
+
+</body>
+</html>

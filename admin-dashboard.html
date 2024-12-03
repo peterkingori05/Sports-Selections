@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Selection - Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin: 50px auto;
+            max-width: 1000px;
+        }
+        .tile {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 280px;
+            height: 150px;
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .tile:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+        .tile h3 {
+            margin: 0;
+            font-size: 20px;
+            color: #333;
+        }
+        .tile p {
+            margin-top: 10px;
+            color: #777;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Admin Dashboard</h1>
+        <p>Manage Users, Interests, and Sports Selections</p>
+    </div>
+
+    <div class="container">
+        <div class="tile" onclick="navigateTo('users.html')">
+            <h3>View & Manage Users</h3>
+            <p>Manage all user information and accounts.</p>
+        </div>
+        <div class="tile" onclick="navigateTo('manage-interests.html')">
+            <h3>View & Manage Interests</h3>
+            <p>Manage user interests and categories.</p>
+        </div>
+        <div class="tile" onclick="navigateTo('manage_sports.html')">
+            <h3>View & Manage Sports Selection</h3>
+            <p>Manage and oversee sports preferences.</p>
+        </div>
+    </div>
+
+    <script>
+        function navigateTo(page) {
+            window.location.href = page;
+        }
+    </script>
+</body>
+</html>

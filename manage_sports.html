@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #1a73e8;
+        }
+        h2 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table th, table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        table th {
+            background-color: #1a73e8;
+            color: #fff;
+        }
+        .actions button {
+            padding: 8px 12px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .accept-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .deny-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        .comment-box {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <h1>Admin Dashboard</h1>
+
+        <h2>Pending Users</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Selected Sport</th>
+                    <th>Reason</th>
+                    <th>Admin Comments</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="pendingTableBody"></tbody>
+        </table>
+
+        <h2>Accepted Users</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Selected Sport</th>
+                    <th>Reason</th>
+                    <th>Admin Comments</th>
+                </tr>
+            </thead>
+            <tbody id="acceptedTableBody"></tbody>
+        </table>
+
+        <h2>Denied Users</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Selected Sport</th>
+                    <th>Reason</th>
+                    <th>Admin Comments</th>
+                </tr>
+            </thead>
+            <tbody id="deniedTableBody"></tbody>
+        </table>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, collection, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDOQVvJ3jIN1a7hNxSko4WPPw8EYB1b0M",
+            authDomain: "sports-selection-18948.firebaseapp.com",
+            projectId: "sports-selection-18948",
+            storageBucket: "sports-selection-18948.firebasestorage.app",
+            messagingSenderId: "339862998532",
+            appId: "1:339862998532:web:e50f88e8709d22d9a0af51",
+            measurementId: "G-HD6G578XCY"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Load user data into respective tables
+        async function loadUserData() {
+            const pendingTableBody = document.getElementById("pendingTableBody");
+            const acceptedTableBody = document.getElementById("acceptedTableBody");
+            const deniedTableBody = document.getElementById("deniedTableBody");
+
+            pendingTableBody.innerHTML = "";
+            acceptedTableBody.innerHTML = "";
+            deniedTableBody.innerHTML = "";
+
+            try {
+                const querySnapshot = await getDocs(collection(db, "sports_selection"));
+                querySnapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const row = document.createElement("tr");
+
+                    if (!data.status) {
+                        // Pending users
+                        row.innerHTML = `
+                            <td>${docSnap.id}</td>
+                            <td>${data.selectedSport || "N/A"}</td>
+                            <td>${data.reason || "N/A"}</td>
+                            <td>
+                                <textarea class="comment-box" id="comment-${docSnap.id}" placeholder="Write a comment...">${data.adminComment || ""}</textarea>
+                            </td>
+                            <td class="actions">
+                                <button class="accept-btn" onclick="confirmAction('${docSnap.id}', 'accepted')">Accept</button>
+                                <button class="deny-btn" onclick="confirmAction('${docSnap.id}', 'denied')">Deny</button>
+                            </td>
+                        `;
+                        pendingTableBody.appendChild(row);
+                    } else if (data.status === "accepted") {
+                        // Accepted users
+                        row.innerHTML = `
+                            <td>${docSnap.id}</td>
+                            <td>${data.selectedSport || "N/A"}</td>
+                            <td>${data.reason || "N/A"}</td>
+                            <td>${data.adminComment || "N/A"}</td>
+                        `;
+                        acceptedTableBody.appendChild(row);
+                    } else if (data.status === "denied") {
+                        // Denied users
+                        row.innerHTML = `
+                            <td>${docSnap.id}</td>
+                            <td>${data.selectedSport || "N/A"}</td>
+                            <td>${data.reason || "N/A"}</td>
+                            <td>${data.adminComment || "N/A"}</td>
+                        `;
+                        deniedTableBody.appendChild(row);
+                    }
+                });
+            } catch (error) {
+                console.error("Error loading user data:", error);
+                alert("Failed to load user data.");
+            }
+        }
+
+        // Confirm action before updating user status
+        window.confirmAction = function (userId, status) {
+            const confirmation = confirm(`Are you sure you want to ${status} this user?`);
+            if (confirmation) {
+                updateUserStatus(userId, status);
+            }
+        };
+
+        // Update user status
+        async function updateUserStatus(userId, status) {
+            try {
+                const userDocRef = doc(db, "sports_selection", userId);
+                const commentBox = document.getElementById(`comment-${userId}`);
+                const adminComment = commentBox ? commentBox.value : "";
+
+                await updateDoc(userDocRef, {
+                    status: status,
+                    adminComment: adminComment
+                });
+
+                alert(`User ${status.charAt(0).toUpperCase() + status.slice(1)} and Saved Successfully.`);
+                loadUserData(); // Refresh tables
+            } catch (error) {
+                console.error("Error updating user status:", error);
+                alert("Failed to update user status.");
+            }
+        }
+
+        // Load data on page load
+        loadUserData();
+    </script>
+</body>
+</html>

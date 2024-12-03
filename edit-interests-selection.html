@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <title>Update Your Interests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .interest-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            margin: 20px;
+        }
+        h1 {
+            font-size: 24px;
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .interest-section {
+            margin-top: 20px;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .interest-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .interest-item h3 {
+            margin: 0 0 10px;
+        }
+        .interest-item p {
+            margin: 0;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0f56b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="interest-container">
+        <h1>Update Your Interests</h1>
+        <form id="updateInterestForm">
+            <div id="interestFields"></div>
+            <button type="submit">Save Changes</button>
+        </form>
+    </div>
+
+    <script type="module">
+        // Firebase configuration
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, collection, query, where, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDOQVvJ3jIN1a7hNxSko4WPPw8EYB1b0M",
+            authDomain: "sports-selection-18948.firebaseapp.com",
+            projectId: "sports-selection-18948",
+            storageBucket: "sports-selection-18948.firebasestorage.app",
+            messagingSenderId: "339862998532",
+            appId: "1:339862998532:web:e50f88e8709d22d9a0af51",
+            measurementId: "G-HD6G578XCY"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+    
+        // Check authentication state
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                fetchInterests(user.uid); // Fetch interests if authenticated
+            }
+        });
+    
+        // Fetch and display user interests
+        async function fetchInterests(userId) {
+            try {
+                const interestsRef = collection(db, "interest_selections");
+                const q = query(interestsRef, where("userId", "==", userId));
+                const querySnapshot = await getDocs(q);
+    
+                const interestFields = document.getElementById('interestFields');
+                if (querySnapshot.empty) {
+                    interestFields.innerHTML = '<p>No interests found. Please submit your interests first.</p>';
+                    return;
+                }
+    
+                querySnapshot.forEach((docSnapshot) => {
+                    const data = docSnapshot.data();
+                    const docId = docSnapshot.id; // Document ID for updating later
+                    interestFields.innerHTML = `
+                        <div class="interest-item">
+                            <label for="school">School/Department:</label>
+                            <input type="text" id="school" value="${data.school || ''}" required>
+                        </div>
+                        <div class="interest-item">
+                            <label for="achievements">Achievements:</label>
+                            <textarea id="achievements">${data.achievements || ''}</textarea>
+                        </div>
+                        <div class="interest-item">
+                            <label for="customInterest">Custom Interest:</label>
+                            <input type="text" id="customInterest" value="${data.customInterest || ''}">
+                        </div>
+                        <div class="interest-item">
+                            <label for="customInterestDesc">Custom Interest Description:</label>
+                            <textarea id="customInterestDesc">${data.customInterestDesc || ''}</textarea>
+                        </div>
+                    `;
+    
+                    // Handle form submission to update data
+                    document.getElementById('updateInterestForm').addEventListener('submit', async function(event) {
+                        event.preventDefault();
+    
+                        const updatedSchool = document.getElementById('school').value;
+                        const updatedAchievements = document.getElementById('achievements').value;
+                        const updatedCustomInterest = document.getElementById('customInterest').value;
+                        const updatedCustomInterestDesc = document.getElementById('customInterestDesc').value;
+    
+                        try {
+                            const docRef = doc(db, "interest_selections", docId); // Reference the document using doc()
+                            await updateDoc(docRef, {
+                                school: updatedSchool,
+                                achievements: updatedAchievements,
+                                customInterest: updatedCustomInterest,
+                                customInterestDesc: updatedCustomInterestDesc,
+                                timestamp: new Date()
+                            });
+    
+                            alert('Your interests have been updated successfully!');
+                            window.location.href = 'dashboard.html'; // Redirect after saving
+                        } catch (error) {
+                            console.error('Error updating interests:', error);
+                            alert('An error occurred while updating your interests. Please try again.');
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('Error fetching interests:', error);
+                alert('An error occurred while retrieving your interests. Please try again.');
+            }
+        }
+    </script>
+    
+</body>
+</html>

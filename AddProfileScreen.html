@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Profile</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #1e88e5;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            padding: 16px;
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            font-size: 20px;
+            font-weight: bold;
+            color: #424242;
+            margin: 16px 0;
+        }
+        .input-field {
+            margin-bottom: 16px;
+        }
+        .input-field label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .input-field input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .gender-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 16px 0;
+        }
+        .gender-container label {
+            flex: 1;
+            padding: 12px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            margin: 0 4px;
+        }
+        .gender-container input {
+            display: none;
+        }
+        .gender-container input:checked + label {
+            background-color: #1e88e5;
+            color: white;
+        }
+        .button {
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+        }
+        .message {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .success {
+            background-color: green;
+            color: white;
+        }
+        .error {
+            background-color: red;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Add Profile</h1>
+    </div>
+
+    <div class="container">
+        <h2>Personal Information</h2>
+        <form id="profileForm">
+            <div class="input-field">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="input-field">
+                <label for="email">Email</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="input-field">
+                <label for="phone">Phone Number</label>
+                <input type="tel" required id="phone">
+            </div>
+            <div class="input-field">
+                <label for="dob">Date of Birth</label>
+                <input type="date" id="dob" required>
+            </div>
+            <div class="input-field">
+                <label for="country">Country</label>
+                <input type="text" id="country" required>
+            </div>
+            <h2>Gender</h2>
+            <div class="gender-container">
+                <input type="radio" id="male" name="gender" value="Male" checked>
+                <label for="male">Male</label>
+                <input type="radio" id="female" name="gender" value="Female">
+                <label for="female">Female</label>
+            </div>
+            <button type="button" class="button" id="saveButton">Save Profile</button>
+            <div id="message" class="message"></div>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDOQVvJ3jIN1a7hNxSko4WPPw8EYB1b0M",
+            authDomain: "sports-selection-18948.firebaseapp.com",
+            projectId: "sports-selection-18948",
+            storageBucket: "sports-selection-18948.firebasestorage.app",
+            messagingSenderId: "339862998532",
+            appId: "1:339862998532:web:e50f88e8709d22d9a0af51",
+            measurementId: "G-HD6G578XCY"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        document.getElementById('saveButton').addEventListener('click', async function() {
+            const user = auth.currentUser;  // Get the currently logged-in user
+            if (!user) {
+                document.getElementById('message').textContent = 'No user is currently signed in.';
+                return;
+            }
+            const userId = user.uid;  // Get the unique user ID
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const dob = document.getElementById('dob').value;
+            const country = document.getElementById('country').value;
+            const gender = document.querySelector('input[name="gender"]:checked').value;
+
+            try {
+                await setDoc(doc(db, "users", userId), {
+                    name,
+                    email,
+                    phone,
+                    dob,
+                    country,
+                    gender
+                });
+                document.getElementById('message').textContent = 'Profile saved successfully!';
+                document.getElementById('message').className = 'message success';
+                
+                // Navigate to interests-selection.html after a short delay
+                setTimeout(() => {
+                    window.location.href = 'interests-selection.html';
+                }, 1000); // 1 second delay
+            } catch (error) {
+                document.getElementById('message').textContent = 'Failed to save profile: ' + error.message;
+                document.getElementById('message').className = 'message error';
+            }
+        });
+    </script>
+</body>
+</html>

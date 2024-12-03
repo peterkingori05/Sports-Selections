@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Manage Users</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #ffffff;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table th, table td {
+            text-align: left;
+            padding: 12px;
+            border: 1px solid #ddd;
+        }
+        table th {
+            background-color: #f7f7f7;
+        }
+        .btn {
+            padding: 8px 12px;
+            margin: 0 5px;
+            font-size: 14px;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .btn-edit {
+            background-color: #28a745;
+        }
+        .btn-delete {
+            background-color: #dc3545;
+        }
+        .btn-back {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 16px;
+        }
+        .btn-back:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="admin-dashboard.html" class="btn-back">Back to Dashboard</a>
+        <h1>Manage Users</h1>
+        <div id="errorMessage" style="color: red; margin-bottom: 10px;"></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Gender</th>
+                    <th>Date of Birth</th>
+                    <th>Country</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                <!-- User rows will be added here dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDOQVvJ3jIN1a7hNxSko4WPPw8EYB1b0M",
+            authDomain: "sports-selection-18948.firebaseapp.com",
+            projectId: "sports-selection-18948",
+            storageBucket: "sports-selection-18948.firebasestorage.app",
+            messagingSenderId: "339862998532",
+            appId: "1:339862998532:web:e50f88e8709d22d9a0af51",
+            measurementId: "G-HD6G578XCY"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const usersTableBody = document.getElementById('usersTableBody');
+        const errorMessage = document.getElementById('errorMessage');
+
+        async function fetchUsers() {
+            try {
+                const usersSnapshot = await getDocs(collection(db, "users"));
+                usersTableBody.innerHTML = ''; // Clear table
+                if (usersSnapshot.empty) {
+                    errorMessage.textContent = "No users found.";
+                    return;
+                }
+
+                usersSnapshot.forEach(doc => {
+                    const user = doc.data();
+                    const userId = doc.id;
+                    const row = `
+                        <tr id="row-${userId}">
+                            <td>${user.name}</td>
+                            <td>${user.email}</td>
+                            <td>${user.phone || 'N/A'}</td>
+                            <td>${user.gender || 'N/A'}</td>
+                            <td>${user.dob || 'N/A'}</td>
+                            <td>${user.country || 'N/A'}</td>
+                            <td>
+                                <button class="btn btn-edit" onclick="editUser('${userId}', '${user.name}', '${user.email}', '${user.phone}', '${user.gender}', '${user.dob}', '${user.country}')">Edit</button>
+                                <button class="btn btn-delete" onclick="deleteUser('${userId}')">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                    usersTableBody.innerHTML += row;
+                });
+            } catch (error) {
+                errorMessage.textContent = "Error fetching users: " + error.message;
+            }
+        }
+
+        async function deleteUser(userId) {
+            try {
+                await deleteDoc(doc(db, "users", userId));
+                document.getElementById(`row-${userId}`).remove(); // Remove row from table
+                alert("User deleted successfully.");
+            } catch (error) {
+                alert("Error deleting user: " + error.message);
+            }
+        }
+
+        async function editUser(userId, name, email, phone, gender, dob, country) {
+            const newName = prompt("Enter new name:", name) || name;
+            const newEmail = prompt("Enter new email:", email) || email;
+            const newPhone = prompt("Enter new phone:", phone) || phone;
+            const newGender = prompt("Enter new gender (Male/Female):", gender) || gender;
+            const newDob = prompt("Enter new date of birth (YYYY-MM-DD):", dob) || dob;
+            const newCountry = prompt("Enter new country:", country) || country;
+
+            try {
+                await updateDoc(doc(db, "users", userId), {
+                    name: newName,
+                    email: newEmail,
+                    phone: newPhone,
+                    gender: newGender,
+                    dob: newDob,
+                    country: newCountry,
+                });
+                alert("User updated successfully.");
+                fetchUsers(); // Refresh users table
+            } catch (error) {
+                alert("Error updating user: " + error.message);
+            }
+        }
+
+        // Load users on page load
+        window.onload = fetchUsers;
+
+        // Make deleteUser and editUser globally accessible
+        window.deleteUser = deleteUser;
+        window.editUser = editUser;
+    </script>
+</body>
+</html>

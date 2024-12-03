@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <title>Update Sports Selection</title>
+    <style>
+        /* Styling remains unchanged */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .sports-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            margin: 20px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 24px;
+            color: #1a73e8;
+            margin-bottom: 20px;
+        }
+        .sports-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        label {
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        input[type="radio"] {
+            margin-right: 10px;
+        }
+        label:hover {
+            background-color: #e0e0e0;
+        }
+        .additional-question, .description-section {
+            margin-top: 20px;
+            text-align: left;
+        }
+        textarea, input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 12px;
+            width: 100%;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0f56b3;
+        }
+        .add-sport-btn {
+            background-color: #4CAF50;
+            margin-top: 10px;
+        }
+        .add-sport-btn:hover {
+            background-color: #3e8e41;
+        }
+    </style>
+</head>
+<body>
+    <div class="sports-container">
+        <h1>Update Your Sport Details</h1>
+        <form id="updateSportsForm">
+            <!-- Sports Selection Grid -->
+            <div class="sports-grid">
+                <label><input type="radio" name="sport" value="Football"> Football</label>
+                <label><input type="radio" name="sport" value="Basketball"> Basketball</label>
+                <label><input type="radio" name="sport" value="Tennis"> Tennis</label>
+                <label><input type="radio" name="sport" value="Swimming"> Swimming</label>
+                <label><input type="radio" name="sport" value="Dart"> Dart</label>
+                <label><input type="radio" name="sport" value="Handball"> Handball</label>
+                <label><input type="radio" name="sport" value="Hockey"> Hockey</label>
+                <label><input type="radio" name="sport" value="Badminton"> Badminton</label>
+            </div>
+
+            <!-- Additional Sport Selection -->
+            <button type="button" class="add-sport-btn" id="addOtherSportBtn">Add Other Sport</button>
+            <div id="otherSportInput" style="display: none;">
+                <label for="customSport">Specify Your Sport:</label>
+                <input type="text" id="customSport" placeholder="Enter sport name here" />
+                <textarea id="customSportDesc" placeholder="Describe your interest or experience in this sport"></textarea>
+            </div>
+
+            <!-- Interest and Achievements Description -->
+            <div id="sportDescription" class="description-section">
+                <label for="description">Describe your interest and achievements in this sport:</label>
+                <textarea id="description" placeholder="Share your experience or accomplishments in this sport"></textarea>
+            </div>
+
+            <!-- Additional Question -->
+            <div class="additional-question">
+                <label>Reason for choosing this sport:</label>
+                <div>
+                    <label><input type="radio" name="reason" value="Fun"> Just for Fun</label>
+                    <label><input type="radio" name="reason" value="School Team"> Join the School Team</label>
+                </div>
+                <textarea id="teamReason" placeholder="If joining the school team, describe why."></textarea>
+            </div>
+
+            <!-- Save Button -->
+            <button type="submit">Save Changes</button>
+        </form>
+    </div>
+
+    <script type="module">
+        // Firebase configuration
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDOQVvJ3jIN1a7hNxSko4WPPw8EYB1b0M",
+            authDomain: "sports-selection-18948.firebaseapp.com",
+            projectId: "sports-selection-18948",
+            storageBucket: "sports-selection-18948.firebasestorage.app",
+            messagingSenderId: "339862998532",
+            appId: "1:339862998532:web:e50f88e8709d22d9a0af51",
+            measurementId: "G-HD6G578XCY"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        async function loadUserData() {
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    alert('You must be signed in to access this page.');
+                    window.location.href = 'signin.html';
+                    return;
+                }
+
+                try {
+                    const userDoc = await getDoc(doc(db, "sports_selection", user.uid));
+
+                    if (userDoc.exists()) {
+                        const data = userDoc.data();
+
+                        if (data.selectedSport) {
+                            document.querySelector(`input[name="sport"][value="${data.selectedSport}"]`).checked = true;
+                        }
+                        if (data.reason) {
+                            document.querySelector(`input[name="reason"][value="${data.reason}"]`).checked = true;
+                        }
+                        document.getElementById('teamReason').value = data.teamReason || '';
+                        document.getElementById('description').value = data.description || '';
+                        document.getElementById('customSport').value = data.customSport || '';
+                        document.getElementById('customSportDesc').value = data.customSportDesc || '';
+                    } else {
+                        alert('Details not found. Please select your sport.');
+                    }
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    alert('An error occurred while loading your data. Please try again later.');
+                }
+            });
+        }
+
+        document.getElementById('updateSportsForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const selectedSport = document.querySelector('input[name="sport"]:checked')?.value;
+            const reason = document.querySelector('input[name="reason"]:checked')?.value;
+            const teamReason = document.getElementById('teamReason').value;
+            const description = document.getElementById('description').value;
+            const customSport = document.getElementById('customSport').value;
+            const customSportDesc = document.getElementById('customSportDesc').value;
+
+            if (!selectedSport || !reason) {
+                alert('Please select a sport and a reason.');
+                return;
+            }
+
+            const user = auth.currentUser;
+            if (!user) {
+                alert('You must be signed in to save your updates.');
+                return;
+            }
+
+            try {
+                await updateDoc(doc(db, "sports_selection", user.uid), {
+                    selectedSport,
+                    reason,
+                    teamReason,
+                    description,
+                    customSport,
+                    customSportDesc,
+                    timestamp: new Date()
+                });
+
+                alert('Your details have been updated successfully!');
+                window.location.href = 'dashboard.html';
+            } catch (error) {
+                console.error('Error updating details:', error);
+                alert('An error occurred while saving your updates. Please try again.');
+            }
+        });
+
+        loadUserData();
+    </script>
+</body>
+</html>
